@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIT校园生活圈</title>
+  <style>
+    :root {
+      --hit-blue: #24508f;
+      --hit-blue-2: #153662;
+      --cyan: #1f9bb4;
+      --green: #27805d;
+      --orange: #d97726;
+      --red: #c24145;
+      --ink: #1d2939;
+      --muted: #667085;
+      --line: #dbe4ef;
+      --soft: #f4f7fb;
+      --soft-2: #eef4fb;
+      --paper: #fff;
+      --shadow: 0 14px 36px rgba(31, 65, 112, .10);
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink);
+      background: #f6f9fd;
+      overflow: hidden;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { border: 0; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .58; }
+    .hidden { display: none !important; }
+    .small { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .muted { color: var(--muted); }
+    .topbar {
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 30px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 8px 24px rgba(37,80,143,.045);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 210px; color: var(--hit-blue); font-size: 20px; font-weight: 900; }
+    .brand-mark, .avatar { display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--hit-blue), var(--hit-blue-2)); font-weight: 900; flex: none; }
+    .brand-mark { width: 44px; height: 44px; border-radius: 50%; font-size: 13px; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; }
+    .nav { display: flex; align-items: center; gap: 4px; height: 100%; flex: 1; overflow-x: auto; scrollbar-width: none; }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav button { height: 100%; padding: 0 14px; color: #344054; background: transparent; font-weight: 850; white-space: nowrap; position: relative; }
+    .nav button.active { color: var(--hit-blue); }
+    .nav button.active::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 4px; background: var(--hit-blue); border-radius: 999px 999px 0 0; }
+    .who { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+    .app-shell {
+      height: calc(100vh - 74px);
+      display: grid;
+      grid-template-columns: 300px minmax(520px, 760px) minmax(320px, 410px) minmax(250px, 300px);
+      gap: 22px;
+      padding: 24px 28px 22px;
+      max-width: 1880px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .rail, .feed, .widgets, .aside {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: #b9c8dc transparent;
+    }
+    .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(37,80,143,.035); overflow: hidden; flex: none; }
+    .pad { padding: 16px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .section-title { color: #233853; font-size: 16px; font-weight: 900; }
+    .btn { min-height: 38px; padding: 0 14px; border-radius: 8px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .primary { background: var(--hit-blue); color: #fff; }
+    .primary:hover { background: var(--hit-blue-2); }
+    .secondary { background: #fff; color: var(--hit-blue); border: 1px solid var(--line); }
+    .danger { background: #fff1f1; color: var(--red); }
+    .text-btn { background: transparent; color: var(--hit-blue); font-weight: 900; padding: 4px 6px; }
+    .field, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      outline: 0;
+    }
+    .field, select { height: 42px; padding: 0 12px; }
+    textarea { min-height: 92px; resize: vertical; padding: 12px; line-height: 1.7; }
+    .row2 { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .composer { display: grid; gap: 12px; }
+    .composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-tabs button { height: 34px; padding: 0 12px; border-radius: 8px; background: #fff; border: 1px solid var(--line); color: #415066; font-weight: 850; }
+    .filter-tabs button.active { background: var(--hit-blue); color: #fff; border-color: var(--hit-blue); }
+    .profile-row { display: flex; align-items: center; gap: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+    .stat { background: var(--soft); border-radius: 8px; padding: 9px 6px; text-align: center; }
+    .stat b { display: block; color: var(--hit-blue); font-size: 20px; }
+    .side-menu { display: flex; flex-direction: column; gap: 4px; }
+    .side-menu button { min-height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 10px; background: transparent; border-radius: 8px; color: #405168; font-weight: 850; text-align: left; }
+    .side-menu button:hover, .side-menu button.active { background: var(--soft-2); color: var(--hit-blue); }
+    .hero { padding: 26px 30px; background: linear-gradient(90deg, rgba(236,243,255,.96), rgba(240,246,255,.86)); border-bottom: 1px solid var(--line); }
+    .hero h1 { margin: 0 0 8px; color: var(--hit-blue); font-size: 26px; line-height: 1.25; }
+    .hero p { margin: 0; color: #48627f; line-height: 1.8; }
+    .post, .card, .notice, .person { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px; }
+    .post { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+    .post:first-child { border-top: 0; }
+    .post-head, .person { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+    .badge, .tag { display: inline-flex; align-items: center; font-size: 12px; font-weight: 850; }
+    .badge { height: 22px; padding: 0 8px; border-radius: 999px; background: var(--soft-2); color: var(--hit-blue); }
+    .tag { padding: 5px 8px; border-radius: 8px; background: var(--soft); color: var(--hit-blue); margin: 3px; }
+    .post h3 { margin: 10px 0 6px; color: #203650; font-size: 17px; }
+    .post p, .card p { line-height: 1.75; color: #44556b; white-space: pre-wrap; }
+    .actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; border-top: 1px solid #edf1f6; padding-top: 9px; margin-top: 10px; }
+    .actions button { min-height: 32px; background: transparent; color: var(--muted); border-radius: 8px; padding: 0 10px; font-weight: 800; }
+    .actions button:hover { background: var(--soft-2); color: var(--hit-blue); }
+    .comment-box { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 10px; }
+    .comment { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 13px; line-height: 1.55; }
+    .rec-list { display: grid; gap: 10px; }
+    .score { color: var(--hit-blue); font-size: 24px; font-weight: 900; }
+    .price { color: var(--orange); font-weight: 900; }
+    .market-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .schedule-grid { display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .schedule-day { min-height: 150px; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+    .schedule-day b { color: var(--hit-blue); }
+    .score-detail { display: grid; gap: 6px; margin-top: 10px; }
+    .score-line { display: grid; grid-template-columns: 72px 46px minmax(0, 1fr); gap: 8px; align-items: start; font-size: 12px; color: #536579; }
+    .score-line strong { color: var(--hit-blue); }
+    .login-page {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 26px;
+      background: radial-gradient(circle at 16% 18%, rgba(36,80,143,.10), transparent 28%), radial-gradient(circle at 84% 86%, rgba(31,155,180,.08), transparent 30%), #fbfdff;
+    }
+    .login-shell { width: min(1320px, 100%); min-height: 720px; display: grid; grid-template-columns: 1.05fr .95fr; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 20px 54px rgba(37,80,143,.14); overflow: hidden; }
+    .login-left { padding: 58px 64px; border-right: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(246,249,253,.82)); }
+    .login-brand { display: flex; align-items: center; gap: 18px; color: var(--hit-blue); font-size: 30px; font-weight: 900; }
+    .login-slogan { margin-top: 170px; color: var(--hit-blue); font-size: 40px; line-height: 1.22; font-weight: 900; }
+    .login-copy { margin-top: 18px; color: #355983; font-size: 17px; line-height: 1.8; }
+    .login-card { display: grid; place-items: center; padding: 62px; }
+    .login-inner { width: min(460px, 100%); }
+    .login-inner h1 { margin: 0 0 10px; color: var(--hit-blue); font-size: 32px; }
+    .quick-logins { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 80; background: #17233a; color: #fff; padding: 12px 16px; border-radius: 8px; box-shadow: 0 16px 38px rgba(0,0,0,.24); opacity: 0; transform: translateY(10px); transition: .22s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 1280px) { .app-shell { grid-template-columns: 280px minmax(500px, 1fr) 320px; } .aside { display: none; } }
+    @media (max-width: 980px) { body { overflow: auto; } .topbar { position: static; } .app-shell { height: auto; grid-template-columns: 1fr; overflow: visible; } .rail, .feed, .widgets, .aside { overflow: visible; display: flex; } .aside { display: flex; } .login-shell { grid-template-columns: 1fr; } .login-left { display: none; } .row2, .grid2, .market-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <section class="login-page" id="loginPage">
+    <div class="login-shell">
+      <div class="login-left">
+        <div class="login-brand"><div class="brand-mark">HIT</div><div>HIT校园生活圈</div></div>
+        <div class="login-slogan">让搭子、活动、求助和记录真正流转起来</div>
+        <div class="login-copy">面向校园日常协作的综合平台，支持学生账号与社团账号共同发布内容、参与活动、处理申请、接收通知和寻找搭子。</div>
+      </div>
+      <div class="login-card">
+        <div class="login-inner">
+          <h1>登录校园账号</h1>
+          <div class="small">可用账号：student_yu / fish / basket / alice / photo_club / badminton_club / volunteer_union，密码均为 123456。</div>
+          <input class="field" id="loginUser" value="student_yu" placeholder="用户名" />
+          <input class="field" id="loginPass" type="password" value="123456" placeholder="密码" />
+          <div class="quick-logins" id="quickLogins"></div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn primary" data-action="login">登录</button>
+            <button class="btn secondary" data-fill-login="photo_club">摄影社账号</button>
+            <button class="btn secondary" data-fill-login="badminton_club">羽毛球社账号</button>
+          </div>
+          <hr style="border:0;border-top:1px solid var(--line);margin:24px 0">
+          <div class="section-title">注册学生账号</div>
+          <input class="field" id="regName" placeholder="姓名，例如：小陈同学" />
+          <input class="field" id="regUser" placeholder="用户名，例如：chen" />
+          <input class="field" id="regInterests" placeholder="兴趣标签：自习,羽毛球,摄影" />
+          <button class="btn secondary" data-action="register">注册并进入</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <header class="topbar app-ui hidden">
+    <div class="brand"><div class="brand-mark">HIT</div><span>校园生活圈</span></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="who"><span class="small" id="who"></span><button class="btn secondary" data-action="logout">退出</button></div>
+  </header>
+  <main class="app-shell app-ui hidden">
+    <aside class="rail" id="rail"></aside>
+    <section class="feed" id="feed"></section>
+    <section class="widgets" id="widgets"></section>
+    <aside class="aside" id="aside"></aside>
+  </main>
+  <div class="toast" id="toast"></div>
+
+<script>
+const API = location.origin;
+const loginAccounts = [
+  ['student_yu', '小宇学长'],
+  ['fish', '一只鱼鱼'],
+  ['basket', '篮球少年'],
+  ['alice', '阿澄同学'],
+  ['photo_club', 'HIT摄影社'],
+  ['badminton_club', '羽毛球社'],
+  ['volunteer_union', '志愿服务队']
+];
+const state = {
+  user: JSON.parse(localStorage.getItem('hit_user') || 'null'),
+  page: 'home',
+  channel: 'all',
+  posts: [],
+  activities: [],
+  clubs: [],
+  buddyTasks: [],
+  marketItems: [],
+  notes: [],
+  dashboard: null,
+  applications: [],
+  matchResults: []
+};
+const studentNav = [
+  {id: 'home', label: '首页动态'},
+  {id: 'match', label: '智能搭子匹配'},
+  {id: 'activities', label: '校园活动'},
+  {id: 'market', label: '二手市场'},
+  {id: 'clubs', label: '社团申请'},
+  {id: 'profile', label: '个人中心'},
+  {id: 'notifications', label: '通知'}
+];
+const orgNav = [
+  {id: 'home', label: '内容发布'},
+  {id: 'activities', label: '活动管理'},
+  {id: 'market', label: '二手市场'},
+  {id: 'applications', label: '成员申请'},
+  {id: 'profile', label: '组织中心'},
+  {id: 'notifications', label: '通知'}
+];
+const channelLabels = { all: '全部', life: '生活记录', study: '学习交流', help: '求助/搭子', club: '社团活动', market: '二手/跑腿' };
+
+function $(id) { return document.getElementById(id); }
+function esc(value) { return String(value ?? '').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, { headers: {'Content-Type': 'application/json'}, ...opts });
+  let data = null;
+  try { data = await res.json(); } catch (err) {}
+  if (!res.ok) throw new Error(data?.detail || '请求失败');
+  return data;
+}
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+function saveUser(user) {
+  state.user = user;
+  localStorage.setItem('hit_user', JSON.stringify(user));
+}
+function navItems() { return state.user?.role === 'org' ? orgNav : studentNav; }
+
+async function loadAppData() {
+  if (!state.user) return;
+  const base = [
+    api('/api/clubs'),
+    api(`/api/notifications?user_id=${state.user.id}`),
+    api(`/api/posts?current_user_id=${state.user.id}&channel=${state.channel}`),
+    api(`/api/activities?current_user_id=${state.user.id}`),
+    api(`/api/buddy-tasks?current_user_id=${state.user.id}`),
+    api(`/api/market-items?current_user_id=${state.user.id}`),
+    api(`/api/dashboard/${state.user.id}`)
+  ];
+  const [clubs, notes, posts, activities, buddyTasks, marketItems, dashboard] = await Promise.all(base);
+  state.clubs = clubs;
+  state.notes = notes;
+  state.posts = posts;
+  state.activities = activities;
+  state.buddyTasks = buddyTasks;
+  state.marketItems = marketItems;
+  state.dashboard = dashboard;
+  if (state.user.role === 'org') {
+    state.applications = await api(`/api/applications?owner_id=${state.user.id}`);
+  }
+}
+async function setPage(page) {
+  state.page = page;
+  await loadAppData();
+  render();
+}
+async function login() {
+  const data = await api('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username: $('loginUser').value.trim(), password: $('loginPass').value })
+  });
+  saveUser(data.user);
+  state.page = 'home';
+  await loadAppData();
+  renderShell();
+  toast('登录成功');
+}
+async function register() {
+  const name = $('regName').value.trim();
+  const username = $('regUser').value.trim();
+  if (!name || !username) return toast('请填写姓名和用户名');
+  const data = await api('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ username, password: '123456', name, role: 'student', interests: $('regInterests').value })
+  });
+  saveUser(data.user);
+  state.page = 'profile';
+  await loadAppData();
+  renderShell();
+  toast('注册成功，默认密码 123456');
+}
+function logout() {
+  localStorage.removeItem('hit_user');
+  location.reload();
+}
+
+function renderShell() {
+  renderQuickLogins();
+  if (!state.user) {
+    $('loginPage').classList.remove('hidden');
+    document.querySelectorAll('.app-ui').forEach(el => el.classList.add('hidden'));
+    return;
+  }
+  $('loginPage').classList.add('hidden');
+  document.querySelectorAll('.app-ui').forEach(el => el.classList.remove('hidden'));
+  $('who').textContent = `${state.user.name} · ${state.user.role === 'org' ? '社团账号' : '学生账号'}`;
+  render();
+}
+function renderQuickLogins() {
+  const el = $('quickLogins');
+  if (!el) return;
+  el.innerHTML = loginAccounts.map(([username, name]) => `<button class="btn secondary" data-fill-login="${username}">${esc(name)}</button>`).join('');
+}
+function render() {
+  if (!state.user) return;
+  renderNav();
+  renderRail();
+  renderFeed();
+  renderWidgets();
+  renderAside();
+}
+function renderNav() {
+  $('nav').innerHTML = navItems().map(item => `<button data-page="${item.id}" class="${state.page === item.id ? 'active' : ''}">${item.label}</button>`).join('');
+}
+function renderRail() {
+  const user = state.user;
+  $('rail').innerHTML = `
+    <section class="panel pad">
+      <div class="profile-row">
+        <div class="avatar">${esc(user.avatar || user.name.slice(0,1))}</div>
+        <div><b>${esc(user.name)}</b><div class="small">${esc(user.college || '学院未填写')} ${esc(user.grade || '')}</div></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>${user.credit_score}</b><span class="small">信用分</span></div>
+        <div class="stat"><b>${(user.interest_list || []).length}</b><span class="small">标签</span></div>
+        <div class="stat"><b>${state.notes.filter(n => !n.is_read).length}</b><span class="small">未读</span></div>
+      </div>
+    </section>
+    <section class="panel pad">
+      <div class="section-title" style="margin-bottom:10px">功能入口</div>
+      <div class="side-menu">${navItems().map(item => `<button class="${state.page === item.id ? 'active' : ''}" data-page="${item.id}">${item.label}</button>`).join('')}</div>
+    </section>
+    <section class="panel pad">
+      <div class="section-title">个人偏好</div>
+      <div style="margin-top:8px">${(user.interest_list || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('') || '<span class="small">还没有填写兴趣标签</span>'}</div>
+      <div class="small" style="margin-top:8px">地点：${esc(user.location_preference || '未填写')}<br>时间：${esc(user.schedule_preference || '未填写')}</div>
+    </section>
+  `;
+}
+function renderFeed() {
+  $('feed').innerHTML = renderComposer() + renderPageContent();
+}
+function renderComposer() {
+  return `
+    <section class="panel">
+      <div class="hero">
+        <h1>${state.user.role === 'org' ? '发布社团动态与活动信息' : '发布校园动态、求助和搭子需求'}</h1>
+        <p>这个输入区会常驻在主内容区，切换到匹配、活动、社团或通知板块时也可以继续发帖。</p>
+      </div>
+      <div class="pad composer">
+        <div class="row2">
+          <input class="field" id="postTitle" placeholder="标题" />
+          <select id="postChannel">
+            <option value="life">生活记录</option>
+            <option value="study">学习交流</option>
+            <option value="help">求助/搭子</option>
+            <option value="club">社团活动</option>
+            <option value="market">二手/跑腿</option>
+          </select>
+        </div>
+        <textarea id="postContent" placeholder="写下内容"></textarea>
+        <input class="field" id="postTags" placeholder="标签，用逗号分隔：自习,摄影,羽毛球" />
+        <div class="composer-actions">
+          <div class="filter-tabs">${Object.entries(channelLabels).map(([key, label]) => `<button data-channel="${key}" class="${state.channel === key ? 'active' : ''}">${label}</button>`).join('')}</div>
+          <button class="btn primary" data-action="createPost">发布帖子</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+function renderPageContent() {
+  if (state.page === 'match') return renderMatch();
+  if (state.page === 'activities') return renderActivities();
+  if (state.page === 'market') return renderMarket();
+  if (state.page === 'clubs') return renderClubs();
+  if (state.page === 'applications') return renderApplications();
+  if (state.page === 'profile') return renderProfile();
+  if (state.page === 'notifications') return renderNotifications();
+  return renderPosts();
+}
+function renderPosts() {
+  return `<section class="panel"><div class="pad section-head"><div class="section-title">信息流</div><span class="small">${channelLabels[state.channel]}</span></div>${state.posts.map(postCard).join('') || '<div class="pad muted">暂无内容</div>'}</section>`;
+}
+function postCard(post) {
+  return `
+    <article class="post" data-post="${post.id}">
+      <div class="post-head">
+        <div class="avatar">${esc(post.author?.avatar || '?')}</div>
+        <div><b>${esc(post.author?.name)}</b> <span class="badge">${esc(channelLabels[post.channel] || post.channel)}</span><div class="small">${esc(post.created_at)}</div></div>
+        <div></div>
+      </div>
+      <h3>${esc(post.title)}</h3>
+      <p>${esc(post.content)}</p>
+      <div>${(post.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+      <div class="actions">
+        <button data-action="like" data-id="${post.id}">${post.liked ? '已赞' : '点赞'} ${post.likes_count}</button>
+        <button data-focus-comment="${post.id}">评论</button>
+      </div>
+      <div>${(post.comments || []).map(c => `<div class="comment"><b>${esc(c.author?.name)}：</b>${esc(c.content)}</div>`).join('')}</div>
+      <div class="comment-box">
+        <input class="field" data-comment-input="${post.id}" placeholder="写评论，Enter 发送" />
+        <button class="btn secondary" data-action="comment" data-id="${post.id}">发送</button>
+      </div>
+    </article>
+  `;
+}
+function renderMatch() {
+  const cards = state.matchResults.length ? state.matchResults.map(matchCard).join('') : state.buddyTasks.map(buddyCard).join('');
+  return `
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">智能搭子匹配</div><button class="btn secondary" data-action="refreshAll">刷新</button></div>
+      <div class="grid2">
+        <input class="field" id="mGoal" placeholder="目标：自习/运动/吃饭/活动" value="自习" />
+        <input class="field" id="mPlace" placeholder="地点偏好" value="图书馆" />
+        <input class="field" id="mTime" placeholder="时间偏好" value="晚上" />
+        <input class="field" id="mTags" placeholder="标签" value="自习,数据结构" />
+      </div>
+      <textarea id="mDesc" placeholder="补充需求" style="margin-top:10px">想找安静刷题搭子，最好能互相监督。</textarea>
+      <button class="btn primary" data-action="runMatch" style="margin-top:10px">开始匹配</button>
+    </section>
+    <section class="panel pad">
+      <div class="section-title">发布搭子任务卡</div>
+      <div class="grid2" style="margin-top:10px">
+        <input class="field" id="btGoal" placeholder="目标" value="自习" />
+        <input class="field" id="btTitle" placeholder="任务标题" />
+        <input class="field" id="btPlace" placeholder="地点" />
+        <input class="field" id="btTime" placeholder="时间" />
+        <input class="field" id="btTags" placeholder="标签" />
+        <input class="field" id="btMax" type="number" min="2" value="4" />
+      </div>
+      <textarea id="btDesc" placeholder="任务说明" style="margin-top:10px"></textarea>
+      <button class="btn secondary" data-action="createBuddy" style="margin-top:10px">发布任务卡</button>
+    </section>
+    <section class="panel pad"><div class="section-title" style="margin-bottom:10px">匹配结果 / 当前任务</div><div class="rec-list">${cards || '<div class="muted">暂无任务</div>'}</div></section>
+  `;
+}
+function matchCard(result) {
+  const task = result.task;
+  return `
+    <div class="card">
+      <div class="section-head"><div><b>${esc(task.title)}</b><div class="small">${esc(task.goal)} · ${esc(task.place)} · ${esc(task.time_slot)}</div></div><div class="score">${result.score}</div></div>
+      <div class="small">匹配理由：${esc(result.reason)}</div>
+      <div class="score-detail">${(result.detail || []).map(row => `<div class="score-line"><span>${esc(row.name)}</span><strong>${Number(row.points) > 0 ? '+' : ''}${esc(row.points)}</strong><span>${esc(row.text)}</span></div>`).join('')}</div>
+      ${result.llm_reason ? `<div class="comment">${esc(result.llm_reason)}</div>` : ''}
+      <div style="margin-top:8px">${task.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+      <button class="btn primary" data-action="joinBuddy" data-id="${task.id}" style="margin-top:10px" ${task.joined ? 'disabled' : ''}>${task.joined ? '已参与' : '加入任务'}</button>
+    </div>
+  `;
+}
+function buddyCard(task) {
+  return `
+    <div class="card">
+      <div class="section-head"><div><b>${esc(task.title)}</b><div class="small">${esc(task.creator?.name)} · ${esc(task.place)} · ${esc(task.time_slot)}</div></div><span class="badge">${task.member_count}/${task.max_members}</span></div>
+      <p>${esc(task.description)}</p>
+      <div>${task.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+      ${task.joined ? `<button class="btn danger" data-action="leaveBuddy" data-id="${task.id}">退出任务</button>` : `<button class="btn primary" data-action="joinBuddy" data-id="${task.id}">加入任务</button>`}
+    </div>
+  `;
+}
+function renderActivities() {
+  const form = state.user.role === 'org' ? `
+    <section class="panel pad">
+      <div class="section-title">发布社团活动</div>
+      <div class="grid2" style="margin-top:10px">
+        <input class="field" id="aTitle" placeholder="活动标题" />
+        <input class="field" id="aPlace" placeholder="地点" />
+        <input class="field" id="aTime" placeholder="时间" />
+        <input class="field" id="aCap" type="number" min="1" value="40" />
+        <input class="field" id="aTags" placeholder="标签" />
+      </div>
+      <textarea id="aDesc" placeholder="活动说明" style="margin-top:10px"></textarea>
+      <button class="btn primary" data-action="createActivity" style="margin-top:10px">发布活动</button>
+    </section>` : '';
+  return `${form}<section class="panel pad"><div class="section-title" style="margin-bottom:10px">校园活动</div><div class="rec-list">${state.activities.map(activityCard).join('') || '<div class="muted">暂无活动</div>'}</div></section>`;
+}
+function activityCard(activity) {
+  return `
+    <div class="card">
+      <div class="section-head"><div><b>${esc(activity.title)}</b><div class="small">${esc(activity.club?.name || activity.creator?.name)} · ${esc(activity.start_time)} · ${esc(activity.place)}</div></div><span class="badge">${activity.joined_count}/${activity.capacity}</span></div>
+      <p>${esc(activity.description)}</p>
+      <div>${activity.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+      ${activity.joined ? `<button class="btn danger" data-action="cancelActivity" data-id="${activity.id}">取消报名</button>` : `<button class="btn primary" data-action="joinActivity" data-id="${activity.id}">报名活动</button>`}
+    </div>
+  `;
+}
+function renderMarket() {
+  return `
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">发布闲置物品</div><span class="small">预约后可由买家或发布人取消</span></div>
+      <div class="grid2">
+        <input class="field" id="mkTitle" placeholder="物品名称" />
+        <input class="field" id="mkPrice" type="number" min="0" placeholder="价格" />
+        <input class="field" id="mkPlace" placeholder="交易地点" />
+        <input class="field" id="mkTags" placeholder="标签：数码,教材,运动" />
+      </div>
+      <textarea id="mkDesc" placeholder="物品描述、成色、联系方式说明" style="margin-top:10px"></textarea>
+      <button class="btn primary" data-action="createMarketItem" style="margin-top:10px">发布闲置</button>
+    </section>
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">二手市场</div><button class="btn secondary" data-action="refreshAll">刷新</button></div>
+      <div class="market-grid">${state.marketItems.map(marketCard).join('') || '<div class="muted">暂无商品</div>'}</div>
+    </section>
+  `;
+}
+function marketCard(item) {
+  const statusText = item.status === 'available' ? '可预约' : item.status === 'reserved' ? '已预约' : '已完成';
+  const action = item.status === 'available'
+    ? `<button class="btn primary" data-action="reserveMarket" data-id="${item.id}" ${item.is_mine ? 'disabled' : ''}>${item.is_mine ? '自己发布' : '预约'}</button>`
+    : (item.reserved_by_me || item.is_mine ? `<button class="btn danger" data-action="cancelMarket" data-id="${item.id}">取消预约</button>` : `<button class="btn secondary" disabled>已被预约</button>`);
+  return `
+    <div class="card">
+      <div class="section-head"><div><b>${esc(item.title)}</b><div class="small">${esc(item.seller?.name)} · ${esc(item.place)}</div></div><div class="price">¥${item.price}</div></div>
+      <p>${esc(item.description)}</p>
+      <div>${item.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+      <div class="small" style="margin-top:8px">状态：${statusText}${item.reserved_by ? ` · 预约人：${esc(item.reserved_by.name)}` : ''}</div>
+      <div style="margin-top:10px">${action}</div>
+    </div>
+  `;
+}
+function renderClubs() {
+  return `<section class="panel pad"><div class="section-title">社团申请</div><div class="small" style="margin:6px 0 12px">学生账号可以提交加入申请，社团账号可以在成员申请板块处理。</div><div class="rec-list">${state.clubs.map(clubCard).join('')}</div></section>`;
+}
+function clubCard(club) {
+  return `
+    <div class="card">
+      <b>${esc(club.name)}</b>
+      <p>${esc(club.description)}</p>
+      <div>${club.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+      <input class="field" id="clubMsg${club.id}" placeholder="申请留言" />
+      <button class="btn primary" data-action="applyClub" data-id="${club.id}" style="margin-top:8px">申请加入</button>
+    </div>
+  `;
+}
+function renderApplications() {
+  return `<section class="panel pad"><div class="section-title">成员申请审核</div><div class="rec-list" style="margin-top:10px">${(state.applications || []).map(appCard).join('') || '<div class="muted">暂无申请</div>'}</div></section>`;
+}
+function appCard(app) {
+  return `<div class="card"><b>${esc(app.user?.name)}</b><div class="small">申请加入：${esc(app.club?.name)} · 状态：${esc(app.status)}</div><p>${esc(app.message)}</p><button class="btn primary" data-action="reviewApp" data-id="${app.id}" data-status="approved">通过</button> <button class="btn danger" data-action="reviewApp" data-id="${app.id}" data-status="rejected">拒绝</button></div>`;
+}
+function renderProfile() {
+  const data = state.dashboard;
+  if (!data) return '<section class="panel pad">资料加载中</section>';
+  return `
+    <section class="panel pad">
+      <div class="section-title">个人 / 组织中心</div>
+      <div class="grid2" style="margin-top:10px">
+        <input class="field" id="pfName" value="${esc(data.user.name)}" />
+        <input class="field" id="pfCollege" value="${esc(data.user.college)}" />
+        <input class="field" id="pfGrade" value="${esc(data.user.grade)}" />
+        <input class="field" id="pfInterests" value="${esc(data.user.interests)}" />
+        <input class="field" id="pfPlace" value="${esc(data.user.location_preference)}" />
+        <input class="field" id="pfTime" value="${esc(data.user.schedule_preference)}" />
+      </div>
+      <textarea id="pfBio" style="margin-top:10px">${esc(data.user.bio)}</textarea>
+      <button class="btn primary" data-action="saveProfile" style="margin-top:10px">保存资料</button>
+    </section>
+    <section class="panel pad">
+      <div class="section-title">我的参与</div>
+      <div class="grid2" style="margin-top:10px">
+        <div><b>我的帖子</b>${data.my_posts.map(post => `<div class="card">${esc(post.title)}</div>`).join('') || '<div class="small">暂无</div>'}</div>
+        <div><b>报名活动</b>${data.joined_activities.map(activity => `<div class="card"><div>${esc(activity.title)}</div><button class="btn danger" data-action="cancelActivity" data-id="${activity.id}" style="margin-top:8px">取消报名</button></div>`).join('') || '<div class="small">暂无</div>'}</div>
+      </div>
+    </section>
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">我的课表</div><span class="small">按周安排学习、活动和自习</span></div>
+      <div class="grid2">
+        <select id="scWeekday"><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select>
+        <input class="field" id="scTitle" placeholder="课程 / 安排名称" />
+        <input class="field" id="scStart" placeholder="开始时间 08:00" />
+        <input class="field" id="scEnd" placeholder="结束时间 09:40" />
+        <input class="field" id="scPlace" placeholder="地点" />
+        <input class="field" id="scNote" placeholder="备注" />
+      </div>
+      <button class="btn primary" data-action="createSchedule" style="margin-top:10px">加入课表</button>
+      <div class="schedule-grid" style="margin-top:12px">${renderSchedule(data.schedule || [])}</div>
+    </section>
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">日常记录</div><span class="small">记录打卡、心情和生活片段</span></div>
+      <div class="grid2">
+        <input class="field" id="drTitle" placeholder="记录标题" />
+        <input class="field" id="drMood" placeholder="心情：开心/专注/疲惫" />
+        <input class="field" id="drTags" placeholder="标签：学习,运动" />
+      </div>
+      <textarea id="drContent" placeholder="今天发生了什么" style="margin-top:10px"></textarea>
+      <button class="btn primary" data-action="createDaily" style="margin-top:10px">保存日常</button>
+      <div class="rec-list" style="margin-top:12px">${(data.daily_records || []).map(record => `<div class="card"><div class="section-head"><div><b>${esc(record.title)}</b><div class="small">${esc(record.created_at)} · ${esc(record.mood)}</div></div><button class="btn danger" data-action="deleteDaily" data-id="${record.id}">删除</button></div><p>${esc(record.content)}</p><div>${record.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div></div>`).join('') || '<div class="small">暂无日常记录</div>'}</div>
+    </section>
+  `;
+}
+function renderSchedule(items) {
+  const days = ['周一','周二','周三','周四','周五','周六','周日'];
+  return days.map(day => {
+    const dayItems = items.filter(item => item.weekday === day);
+    return `<div class="schedule-day"><b>${day}</b>${dayItems.map(item => `<div class="comment"><div><b>${esc(item.title)}</b></div><div class="small">${esc(item.start_time)}-${esc(item.end_time)} · ${esc(item.place)}</div><div class="small">${esc(item.note)}</div><button class="text-btn" data-action="deleteSchedule" data-id="${item.id}">删除</button></div>`).join('') || '<div class="small" style="margin-top:8px">暂无安排</div>'}</div>`;
+  }).join('');
+}
+function renderNotifications() {
+  return `<section class="panel pad"><div class="section-head"><div class="section-title">通知中心</div><button class="btn secondary" data-action="readAll">全部已读</button></div><div class="rec-list">${state.notes.map(note => `<div class="notice"><b>${esc(note.type)}</b><div>${esc(note.content)}</div><div class="small">${esc(note.created_at)} ${note.is_read ? '已读' : '未读'}</div></div>`).join('') || '<div class="muted">暂无通知</div>'}</div></section>`;
+}
+function renderWidgets() {
+  const openTasks = state.buddyTasks.filter(task => !task.joined).slice(0, 3);
+  $('widgets').innerHTML = `
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">智能搭子推荐</div><button class="text-btn" data-page="match">更多</button></div>
+      <div class="rec-list">${openTasks.map(task => `<div class="card"><b>${esc(task.title)}</b><div class="small">${esc(task.place)} · ${esc(task.time_slot)}</div><div>${task.tags.slice(0,3).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div>`).join('') || '<div class="small">暂无可加入任务</div>'}</div>
+    </section>
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">校园活动</div><button class="text-btn" data-page="activities">更多</button></div>
+      <div class="rec-list">${state.activities.slice(0,3).map(activity => `<div class="card"><b>${esc(activity.title)}</b><div class="small">${esc(activity.start_time)} · ${esc(activity.place)}</div></div>`).join('')}</div>
+    </section>
+    <section class="panel pad">
+      <div class="section-title">学习与生活服务</div>
+      <div class="grid2" style="margin-top:10px">
+        <div class="card" data-page="market"><b>二手流转</b><div class="small">发布闲置、预约和取消预约</div></div>
+        <div class="card" data-page="profile"><b>课表日常</b><div class="small">管理个人课表和日常记录</div></div>
+        <div class="card"><b>学习互助</b><div class="small">进入搭子匹配寻找同学</div></div>
+        <div class="card"><b>校园问答</b><div class="small">在信息流发布求助即可</div></div>
+      </div>
+    </section>
+  `;
+}
+function renderAside() {
+  $('aside').innerHTML = `
+    <section class="panel pad">
+      <div class="section-head"><div class="section-title">通知中心</div><button class="text-btn" data-page="notifications">查看</button></div>
+      <div class="rec-list">${state.notes.slice(0,4).map(note => `<div class="notice"><b>${esc(note.type)}</b><div class="small">${esc(note.content)}</div></div>`).join('') || '<div class="small">暂无通知</div>'}</div>
+    </section>
+    <section class="panel pad">
+      <div class="section-title">可用账号</div>
+      <div class="small" style="margin-top:8px">${loginAccounts.map(([username, name]) => `${name}：${username} / 123456`).join('<br>')}</div>
+    </section>
+    <section class="panel pad">
+      <div class="section-title">社团入口</div>
+      <div class="rec-list" style="margin-top:10px">${state.clubs.slice(0,3).map(club => `<div class="person"><div class="avatar">${esc(club.name.slice(0,1))}</div><div><b>${esc(club.name)}</b><div class="small">${esc(club.description)}</div></div><button class="btn secondary" data-page="clubs">申请</button></div>`).join('')}</div>
+    </section>
+  `;
+}
+
+async function createPost() {
+  const title = $('postTitle').value.trim();
+  const content = $('postContent').value.trim();
+  if (!title || !content) return toast('标题和内容不能为空');
+  await api('/api/posts', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: state.user.id, title, content, channel: $('postChannel').value, tags: $('postTags').value })
+  });
+  $('postTitle').value = '';
+  $('postContent').value = '';
+  $('postTags').value = '';
+  state.page = 'home';
+  await loadAppData();
+  render();
+  toast('发布成功');
+}
+async function comment(id) {
+  const input = document.querySelector(`[data-comment-input="${id}"]`);
+  if (!input.value.trim()) return toast('请输入评论内容');
+  await api(`/api/posts/${id}/comments`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id, content: input.value }) });
+  await loadAppData();
+  render();
+}
+async function like(id) {
+  await api(`/api/posts/${id}/like`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  await loadAppData();
+  render();
+}
+async function runMatch() {
+  const data = await api('/api/match', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: state.user.id, goal: $('mGoal').value, description: $('mDesc').value, place: $('mPlace').value, time_slot: $('mTime').value, tags: $('mTags').value, use_llm: true })
+  });
+  state.matchResults = data;
+  render();
+  toast(data.length ? '匹配完成' : '暂时没有可匹配任务');
+}
+async function createBuddy() {
+  await api('/api/buddy-tasks', {
+    method: 'POST',
+    body: JSON.stringify({ creator_id: state.user.id, goal: $('btGoal').value, title: $('btTitle').value || '新的搭子任务', description: $('btDesc').value, place: $('btPlace').value, time_slot: $('btTime').value, tags: $('btTags').value, max_members: Number($('btMax').value || 4) })
+  });
+  state.matchResults = [];
+  await loadAppData();
+  render();
+  toast('任务卡已发布');
+}
+async function joinBuddy(id) {
+  await api(`/api/buddy-tasks/${id}/join`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  state.matchResults = [];
+  await loadAppData();
+  render();
+  toast('已加入搭子任务');
+}
+async function leaveBuddy(id) {
+  await api(`/api/buddy-tasks/${id}/leave`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  state.matchResults = [];
+  await loadAppData();
+  render();
+  toast('已退出搭子任务');
+}
+async function createActivity() {
+  await api('/api/activities', {
+    method: 'POST',
+    body: JSON.stringify({ creator_id: state.user.id, title: $('aTitle').value || '社团活动', description: $('aDesc').value, place: $('aPlace').value, start_time: $('aTime').value, capacity: Number($('aCap').value || 40), tags: $('aTags').value })
+  });
+  await loadAppData();
+  render();
+  toast('活动已发布');
+}
+async function joinActivity(id) {
+  await api(`/api/activities/${id}/join`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  await loadAppData();
+  render();
+  toast('报名成功');
+}
+async function cancelActivity(id) {
+  await api(`/api/activities/${id}/cancel`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  await loadAppData();
+  render();
+  toast('已取消报名');
+}
+async function createMarketItem() {
+  const title = $('mkTitle').value.trim();
+  if (!title) return toast('请填写物品名称');
+  await api('/api/market-items', {
+    method: 'POST',
+    body: JSON.stringify({ seller_id: state.user.id, title, description: $('mkDesc').value, price: Number($('mkPrice').value || 0), place: $('mkPlace').value, tags: $('mkTags').value })
+  });
+  await loadAppData();
+  render();
+  toast('闲置已发布');
+}
+async function reserveMarket(id) {
+  await api(`/api/market-items/${id}/reserve`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  await loadAppData();
+  render();
+  toast('预约成功');
+}
+async function cancelMarket(id) {
+  await api(`/api/market-items/${id}/cancel-reservation`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  await loadAppData();
+  render();
+  toast('预约已取消');
+}
+async function applyClub(id) {
+  const input = $('clubMsg' + id);
+  await api(`/api/clubs/${id}/apply`, { method: 'POST', body: JSON.stringify({ user_id: state.user.id, message: input.value }) });
+  await loadAppData();
+  render();
+  toast('申请已提交');
+}
+async function reviewApp(id, status) {
+  await api(`/api/applications/${id}/review`, { method: 'POST', body: JSON.stringify({ reviewer_id: state.user.id, status }) });
+  await loadAppData();
+  render();
+  toast('审核完成');
+}
+async function saveProfile() {
+  const data = await api(`/api/users/${state.user.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name: $('pfName').value, college: $('pfCollege').value, grade: $('pfGrade').value, bio: $('pfBio').value, interests: $('pfInterests').value, location_preference: $('pfPlace').value, schedule_preference: $('pfTime').value })
+  });
+  saveUser(data.user);
+  await loadAppData();
+  renderShell();
+  toast('资料已保存');
+}
+async function readAll() {
+  await api('/api/notifications/read-all', { method: 'POST', body: JSON.stringify({ user_id: state.user.id }) });
+  await loadAppData();
+  render();
+}
+async function createSchedule() {
+  const title = $('scTitle').value.trim();
+  if (!title) return toast('请填写课表名称');
+  await api('/api/schedule', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: state.user.id, weekday: $('scWeekday').value, start_time: $('scStart').value, end_time: $('scEnd').value, title, place: $('scPlace').value, note: $('scNote').value })
+  });
+  await loadAppData();
+  render();
+  toast('课表已更新');
+}
+async function deleteSchedule(id) {
+  await api(`/api/schedule/${id}?user_id=${state.user.id}`, { method: 'DELETE' });
+  await loadAppData();
+  render();
+  toast('课表项已删除');
+}
+async function createDaily() {
+  const title = $('drTitle').value.trim();
+  if (!title) return toast('请填写记录标题');
+  await api('/api/daily-records', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: state.user.id, title, content: $('drContent').value, mood: $('drMood').value, tags: $('drTags').value })
+  });
+  await loadAppData();
+  render();
+  toast('日常已保存');
+}
+async function deleteDaily(id) {
+  await api(`/api/daily-records/${id}?user_id=${state.user.id}`, { method: 'DELETE' });
+  await loadAppData();
+  render();
+  toast('日常记录已删除');
+}
+
+document.addEventListener('click', async event => {
+  try {
+    const page = event.target.closest('[data-page]');
+    if (page) return setPage(page.dataset.page);
+    const fill = event.target.closest('[data-fill-login]');
+    if (fill) {
+      $('loginUser').value = fill.dataset.fillLogin;
+      $('loginPass').value = '123456';
+      return;
+    }
+    const channel = event.target.closest('[data-channel]');
+    if (channel) {
+      state.channel = channel.dataset.channel;
+      state.page = 'home';
+      await loadAppData();
+      return render();
+    }
+    const focus = event.target.closest('[data-focus-comment]');
+    if (focus) {
+      document.querySelector(`[data-comment-input="${focus.dataset.focusComment}"]`)?.focus();
+      return;
+    }
+    const el = event.target.closest('[data-action]');
+    if (!el) return;
+    const id = el.dataset.id;
+    const actions = {
+      login,
+      register,
+      logout,
+      createPost,
+      runMatch,
+      createBuddy,
+      refreshAll: async () => { await loadAppData(); render(); },
+      createActivity,
+      createMarketItem,
+      saveProfile,
+      readAll,
+      createSchedule,
+      createDaily,
+      comment: () => comment(id),
+      like: () => like(id),
+      joinBuddy: () => joinBuddy(id),
+      leaveBuddy: () => leaveBuddy(id),
+      joinActivity: () => joinActivity(id),
+      cancelActivity: () => cancelActivity(id),
+      reserveMarket: () => reserveMarket(id),
+      cancelMarket: () => cancelMarket(id),
+      applyClub: () => applyClub(id),
+      reviewApp: () => reviewApp(id, el.dataset.status),
+      deleteSchedule: () => deleteSchedule(id),
+      deleteDaily: () => deleteDaily(id)
+    };
+    await actions[el.dataset.action]?.();
+  } catch (err) {
+    toast(err.message);
+  }
+});
+document.addEventListener('keydown', async event => {
+  const input = event.target.closest('[data-comment-input]');
+  if (input && event.key === 'Enter') {
+    event.preventDefault();
+    try { await comment(input.dataset.commentInput); } catch (err) { toast(err.message); }
+  }
+});
+
+renderQuickLogins();
+if (state.user) {
+  loadAppData().then(renderShell).catch(err => {
+    localStorage.removeItem('hit_user');
+    toast(err.message);
+    renderShell();
+  });
+} else {
+  renderShell();
+}
+</script>
+</body>
+</html>
